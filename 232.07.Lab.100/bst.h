@@ -139,17 +139,16 @@ public:
    // Construct
    //
    BNode()
-   {
-      pLeft = pRight = this;
-   }
-   BNode(const T &  t) 
-   {
-      pLeft = pRight = this; 
-   }
-   BNode(T && t) 
-   {  
-      pLeft = pRight = this;
-   }
+      : data{}, pLeft(nullptr), pRight(nullptr), pParent(nullptr), isRed(false)
+   { }
+
+   BNode(const T& t)
+      : data(t), pLeft(nullptr), pRight(nullptr), pParent(nullptr), isRed(false)
+   { }
+
+   BNode(T&& t)
+      : data(std::move(t)), pLeft(nullptr), pRight(nullptr), pParent(nullptr), isRed(false)
+   { }
 
    //
    // Insert
@@ -232,12 +231,16 @@ public:
    iterator & operator ++ ();
    iterator   operator ++ (int postfix)
    {
-      return *this;
+      iterator old(*this);
+         ++(*this);
+         return old;
    }
    iterator & operator -- ();
    iterator   operator -- (int postfix)
    {
-      return *this;;
+      iterator old(*this);
+         --(*this);
+         return old;
    }
 
    // must give friend status to remove so it can call getNode() from it
@@ -271,7 +274,7 @@ BST <T> ::BST()
 
 /*********************************************
  * BST :: COPY CONSTRUCTOR
- * Copy one tree to another
+ * Copy one tree to anotherds
  ********************************************/
 template <typename T>
 BST <T> :: BST ( const BST<T>& rhs) 
@@ -497,7 +500,30 @@ void BST <T> ::BNode::addRight(T && t)
 template <typename T>
 typename BST <T> :: iterator & BST <T> :: iterator :: operator ++ ()
 {
-   return *this;  
+   if (!pNode)
+         return *this;
+
+      // Case 1: has right child -> go right, then all the way left
+      if (pNode->pRight)
+      {
+         pNode = pNode->pRight;
+         while (pNode->pLeft)
+            pNode = pNode->pLeft;
+      }
+      // Case 2: no right child -> go up until we come from a left child
+      else
+      {
+         BNode* up  = pNode->pParent;
+         BNode* cur = pNode;
+         while (up && cur == up->pRight)
+         {
+            cur = up;
+            up  = up->pParent;
+         }
+         pNode = up;  // may become nullptr (end)
+      }
+
+      return *this;
 }
 
 /**************************************************
@@ -507,8 +533,31 @@ typename BST <T> :: iterator & BST <T> :: iterator :: operator ++ ()
 template <typename T>
 typename BST <T> :: iterator & BST <T> :: iterator :: operator -- ()
 {
-   return *this;
+   // If we're already at end() (nullptr), move to the rightmost (largest) node
+      if (!pNode)
+         return *this; // if your end()-- behavior should go to max, adjust here if needed
 
+      // Case 1: has left child -> go left, then all the way right
+      if (pNode->pLeft)
+      {
+         pNode = pNode->pLeft;
+         while (pNode->pRight)
+            pNode = pNode->pRight;
+      }
+      // Case 2: no left child -> go up until we come from a right child
+      else
+      {
+         BNode* up  = pNode->pParent;
+         BNode* cur = pNode;
+         while (up && cur == up->pLeft)
+         {
+            cur = up;
+            up  = up->pParent;
+         }
+         pNode = up;  // may become nullptr (before begin)
+      }
+
+      return *this;
 }
 
 
