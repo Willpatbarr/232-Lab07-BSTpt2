@@ -15,15 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="testBNode.cpp">
+    <ClCompile Include="testBST.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bnode.h">
+    <ClInclude Include="bst.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="testBNode.h">
+    <ClInclude Include="spy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="testBST.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="testSpy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="unitTest.h">

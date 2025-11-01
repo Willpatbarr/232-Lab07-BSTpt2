@@ -2,18 +2,19 @@
  * Header:
  *    Test
  * Summary:
- *    Driver to test bnode.h
+ *    Driver to test bst.h
  * Author
  *    Br. Helfrich
  ************************************************************************/
-
 
 #ifndef DEBUG
 #define DEBUG   
 #endif
  //#undef DEBUG  // Remove this comment to disable unit tests
 
-#include "testBNode.h"       // for the BST unit tests
+#include "testBST.h"        // for the BST unit tests
+#include "testSpy.h"        // for the spy unit tests
+int Spy::counters[] = {};
 
 /**********************************************************************
  * MAIN
@@ -23,9 +24,9 @@ int main()
 {
 #ifdef DEBUG
    // unit tests
-   TestBNode().run();
+   TestSpy().run();
+   TestBST().run();
 #endif // DEBUG
-   
    
    return 0;
 }
