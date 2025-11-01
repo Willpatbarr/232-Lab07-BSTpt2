@@ -171,8 +171,8 @@ public:
    // Data
    //
    T data;                  // Actual data stored in the BNode
-   BNode* pLeft;          // Left child - smaller
-   BNode* pRight;         // Right child - larger
+   BNode* pLeft;            // Left child - smaller
+   BNode* pRight;           // Right child - larger
    BNode* pParent;        // Parent
    bool isRed;              // Red-black balancing stuff
 };
@@ -195,32 +195,38 @@ class BST <T> :: iterator
    friend class set; 
 public:
    // constructors and assignment
-   iterator(BNode * p = nullptr)          
-   { 
-   }
-   iterator(const iterator & rhs)         
-   { 
-   }
+   iterator(BNode* p = nullptr)
+      : pNode(p)
+   { }
+   
+   iterator(const iterator& rhs)
+      : pNode(rhs.pNode)
+   { }
+   
    iterator & operator = (const iterator & rhs)
    {
+      pNode = rhs.pNode;
       return *this;
    }
 
    // compare
    bool operator == (const iterator & rhs) const
    {
-      return true;
-   }
-   bool operator != (const iterator & rhs) const
-   {
-      return true;
+      return pNode == rhs.pNode;
    }
 
-   // de-reference. Cannot change because it will invalidate the BST
-   const T & operator * () const 
+   bool operator != (const iterator & rhs) const
    {
-      return *(new T);
+      return pNode != rhs.pNode;
    }
+
+
+   // de-reference. Cannot change because it will invalidate the BST
+   const T & operator * () const
+   {
+      return pNode->data;
+   }
+
 
    // increment and decrement
    iterator & operator ++ ();
