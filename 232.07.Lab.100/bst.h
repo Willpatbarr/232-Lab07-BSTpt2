@@ -14,7 +14,7 @@
  *        BST                 : A class that represents a binary search tree
  *        BST::iterator       : An iterator through BST
  * Author
- *    <your names here>
+ *    Sara Nuss, William Patrick-Barr
  ************************************************************************/
 
 #pragma once
@@ -67,10 +67,10 @@ public:
    // Construct
    //
 
-   BST();
-   BST(const BST &  rhs);
-   BST(      BST && rhs);
-   BST(const std::initializer_list<T>& il);
+   BST() : root(nullptr), numElements(0) {}
+   BST(const BST &  rhs) : root(nullptr), numElements(0) { *this = rhs; }
+   BST(      BST && rhs) : root(rhs.root), numElements(rhs.numElements) { rhs.root = nullptr; rhs.numElements = 0; }
+   BST(const std::initializer_list<T>& il) : root(nullptr), numElements(0) { *this = il; }
    ~BST();
 
    //
@@ -123,6 +123,7 @@ private:
    class BNode;
    BNode * root;              // root node of the binary search tree
    size_t numElements;        // number of elements currently in the tree
+
 };
 
 
@@ -157,8 +158,8 @@ public:
    // 
    // Status
    //
-   bool isRightChild(BNode * pNode) const { return true; }
-   bool isLeftChild( BNode * pNode) const { return true; }
+   bool isRightChild(BNode * pNode) const { return (pNode->pParent->pRight == pNode); }
+   bool isLeftChild( BNode * pNode) const { return (pNode->pParent->pLeft == pNode); }
 
    //
    // Data
@@ -259,45 +260,23 @@ private:
  /*********************************************
   * BST :: DEFAULT CONSTRUCTOR
   ********************************************/
-template <typename T>
-BST <T> ::BST()
-{
-   numElements = 99;
-   root = new BNode;
-}
+
 
 /*********************************************
  * BST :: COPY CONSTRUCTOR
  * Copy one tree to another
  ********************************************/
-template <typename T>
-BST <T> :: BST ( const BST<T>& rhs) 
-{
-   numElements = 99;
-   root = new BNode;
-}
 
 /*********************************************
  * BST :: MOVE CONSTRUCTOR
  * Move one tree to another
  ********************************************/
-template <typename T>
-BST <T> :: BST(BST <T> && rhs) 
-{
-   numElements = 99;
-   root = new BNode;
-}
+
 
 /*********************************************
  * BST :: INITIALIZER LIST CONSTRUCTOR
  * Create a BST from an initializer list
  ********************************************/
-template <typename T>
-BST <T> ::BST(const std::initializer_list<T>& il)
-{
-   numElements = 99;
-   root = new BNode;
-}
 
 /*********************************************
  * BST :: DESTRUCTOR
@@ -326,7 +305,7 @@ BST <T> & BST <T> :: operator = (const BST <T> & rhs)
 template <typename T>
 BST <T> & BST <T> :: operator = (const std::initializer_list<T>& il)
 {
-   return *this;
+
 }
 
 /*********************************************
@@ -336,6 +315,8 @@ BST <T> & BST <T> :: operator = (const std::initializer_list<T>& il)
 template <typename T>
 BST <T> & BST <T> :: operator = (BST <T> && rhs)
 {
+    clear();
+    swap(rhs);
    return *this;
 }
 
@@ -380,6 +361,53 @@ std::pair<typename BST <T> ::iterator, bool> BST <T> ::insert(T && t, bool keepU
 template <typename T>
 typename BST <T> ::iterator BST <T> :: erase(iterator & it)
 {
+    BNode* pNode = it.pNode;
+
+    if (!pNode)
+        return end();
+
+    else if (!pNode->pRight and !pNode->pLeft)
+    {
+        if (pNode->pParent and (pNode->pParent->pRight == it.pNode))
+            pNode->pParent->pRight = nullptr;
+        if (pNode->pParent and (pNode->pParent->pLeft == it.pNode))
+            pNode->pParent->pLeft = nullptr;
+        delete it.pNode;
+    }
+
+    else if (!pNode->pRight and pNode->pLeft)
+    {
+        pNode->pLeft->pParent = pNode->pParent;
+        if (pNode->pParent and pNode->pParent->pRight == it.pNode)
+            pNode->pParent->pRight = pNode->pLeft;
+        if (pNode->pParent and pNode->pParent->pLeft == it.pNode)
+            pNode->pParent->pLeft = pNode->pLeft;
+        delete it.pNode;
+    }
+
+    else if (!pNode->pLeft and pNode->pRight)
+    {
+        pNode->pRight->pParent = pNode->pParent;
+        if (pNode->pParent and pNode->pParent->pRight == it.pNode)
+            pNode->pParent->pRight = pNode->pRight;
+        if (pNode->pParent and pNode->pParent->pLeft == it.pNode)
+            pNode->pParent->pLeft = pNode->pRight;
+        delete it.pNode;
+    }
+    else
+    {
+        BNode* pSuccessor = pNode->pRight;
+        while (pSuccessor->pLeft)
+            pSuccessor = pSuccessor->pLeft;
+        if (pNode->pParent and pNode->pParent->pRight == it.pNode)
+            pNode->pParent->pRight = pSuccessor;
+        if (pNode->pParent and pNode->pParent->pLeft == it.pNode)
+            pNode->pParent->pLeft = pSuccessor;
+        if (pSuccessor->pRight)pSuccessor->pParent->pLeft = pSuccessor->pRight;
+        delete it.pNode;
+    }
+
+
 
 
 
@@ -419,6 +447,7 @@ typename BST <T> :: iterator custom :: BST <T> :: begin() const noexcept
 template <typename T>
 typename BST <T> :: iterator BST<T> :: find(const T & t)
 {
+
     BNode* p = root;
     while (p)
     {
