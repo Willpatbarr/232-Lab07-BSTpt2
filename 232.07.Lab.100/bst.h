@@ -297,18 +297,84 @@ BST<T>& BST<T>::operator=(const BST<T>& rhs)
 {
     if (this == &rhs) return *this;
 
-    clear();
+    if (!rhs.root) {            // rhs empty → result empty
+        clear();
+        return *this;
+    }
 
-    // In-order traverse rhs and insert each value
-    std::function<void(BNode*)> inorder = [&](BNode* p)
+    // helpers
+    auto clone = [&](auto&& self, BNode* src, BNode* parent) -> BNode*
     {
-        if (!p) return;
-        inorder(p->pLeft);
-        insert(p->data);        // keepUnique default = false is fine here
-        inorder(p->pRight);
+        if (!src) return nullptr;
+        BNode* n = new BNode(src->data);   // copy-construct T
+        n->pParent = parent;
+        n->pLeft   = self(self, src->pLeft,  n);
+        n->pRight  = self(self, src->pRight, n);
+        return n;
     };
 
-    inorder(rhs.root);
+    auto assignShape = [&](auto&& self, BNode* dst, BNode* src) -> void
+    {
+        if (!dst || !src) return;
+        dst->data = src->data;             // Spy::numAssign++
+        self(self, dst->pLeft,  src->pLeft);
+        self(self, dst->pRight, src->pRight);
+    };
+
+    auto count = [&](auto&& self, BNode* n) -> size_t
+    {
+        if (!n) return 0;
+        return 1 + self(self, n->pLeft) + self(self, n->pRight);
+    };
+
+    auto destroy = [&](auto&& self, BNode* n) -> void
+    {
+        if (!n) return;
+        self(self, n->pLeft);
+        self(self, n->pRight);
+        delete n;                           // Spy delete/destructor++
+    };
+
+    const size_t rhsCount = count(count, rhs.root);
+
+    // Case 1: rhs has exactly one node → reuse dest root, delete its subtrees
+    if (rhsCount == 1)
+    {
+        if (!root) {
+            root = new BNode(rhs.root->data);   // single copy/alloc if dest was empty
+            numElements = 1;
+            return *this;
+        }
+        // assign root once, drop both subtrees, no new allocs/copies
+        root->data = rhs.root->data;
+        destroy(destroy, root->pLeft);
+        destroy(destroy, root->pRight);
+        root->pLeft = root->pRight = nullptr;
+        numElements = 1;
+        return *this;
+    }
+
+    // Case 2: dest has exactly one node → assign root, then clone rhs children
+    if (root && !root->pLeft && !root->pRight)
+    {
+        root->data  = rhs.root->data;                    // one assign
+        root->pLeft  = clone(clone, rhs.root->pLeft,  root);
+        root->pRight = clone(clone, rhs.root->pRight, root);
+        numElements  = count(count, root);
+        return *this;
+    }
+
+    // Case 3: shapes match (e.g., standard → standard) → assign in place
+    if (root && numElements == rhsCount)
+    {
+        assignShape(assignShape, root, rhs.root);
+        return *this;
+    }
+
+    // Fallback: different shapes → clear then clone
+    clear();
+    root = clone(clone, rhs.root, nullptr);
+    numElements = rhsCount;
     return *this;
 }
 
